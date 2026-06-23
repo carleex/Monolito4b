@@ -1,0 +1,223 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="Monolito4b.SiteMaster" %>
+<!DOCTYPE html>
+<html lang="es">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> — Monolito4b</title>
+    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+    <style>
+        :root { --sb: 232px; --accent: #ff6b9d; --bg: #0d0d1a; --card: #141427; --border: rgba(255,255,255,.07); }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #ccd0e0; display: flex; min-height: 100vh; }
+
+        /* ─── Sidebar ─── */
+        #sidebar {
+            width: var(--sb); background: #0b0b17;
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; bottom: 0;
+            overflow-y: auto; z-index: 200;
+            transition: transform .25s;
+        }
+        #sidebar .brand {
+            padding: 22px 18px 18px;
+            font-size: 1.05rem; font-weight: 700; color: var(--accent);
+            border-bottom: 1px solid var(--border); letter-spacing: .03em;
+        }
+        #sidebar .profile {
+            padding: 14px 18px; border-bottom: 1px solid var(--border);
+        }
+        #sidebar .profile .p-name {
+            font-size: .85rem; font-weight: 600; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        #sidebar .profile .p-role { font-size: .72rem; color: #666a85; margin-top: 2px; }
+        #sidebar nav { flex: 1; padding: 8px 0; }
+        #sidebar nav .sec-lbl {
+            padding: 14px 18px 4px;
+            font-size: .65rem; text-transform: uppercase;
+            letter-spacing: .07em; color: #444760;
+        }
+        #sidebar nav a,
+        #sidebar nav button.sub-toggle {
+            display: flex; align-items: center; gap: 9px;
+            padding: 10px 18px; color: #8b8fa8;
+            text-decoration: none; font-size: .84rem;
+            background: none; border: none; width: 100%;
+            cursor: pointer; text-align: left;
+            transition: background .15s, color .15s;
+        }
+        #sidebar nav a:hover,
+        #sidebar nav button.sub-toggle:hover { background: rgba(255,107,157,.1); color: #fff; }
+        #sidebar nav a.active { background: rgba(255,107,157,.15); color: var(--accent); }
+        #sidebar nav a svg, #sidebar nav button.sub-toggle svg { flex-shrink: 0; }
+        #sidebar nav .arrow { margin-left: auto; font-size: .7rem; transition: transform .2s; }
+        #sidebar nav button.sub-toggle.open .arrow { transform: rotate(90deg); }
+        #sidebar nav .submenu { display: none; background: rgba(0,0,0,.25); }
+        #sidebar nav .submenu.open { display: block; }
+        #sidebar nav .submenu a { padding-left: 46px; font-size: .8rem; }
+        #sidebar .sb-logout { padding: 14px 18px; border-top: 1px solid var(--border); }
+        #sidebar .sb-logout input[type=submit] {
+            width: 100%; padding: 9px 0; border: 1px solid #c94040;
+            border-radius: 6px; background: transparent; color: #e05050;
+            font-size: .82rem; cursor: pointer; transition: background .15s, color .15s;
+        }
+        #sidebar .sb-logout input[type=submit]:hover { background: #c94040; color: #fff; }
+
+        /* ─── Main area ─── */
+        #main-wrap { margin-left: var(--sb); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        #main-content { flex: 1; padding: 28px 30px; }
+        #main-footer {
+            padding: 10px 28px; text-align: center;
+            color: rgba(255,255,255,.15); font-size: .72rem;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ─── Shared card / table helpers ─── */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; margin-bottom: 22px; }
+        .page-title { font-size: 1.25rem; font-weight: 600; color: #fff; margin-bottom: 18px; }
+        .btn-primary { background: var(--accent); border: none; color: #fff; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: .85rem; }
+        .btn-primary:hover { opacity: .88; }
+        .btn-danger  { background: #c94040; border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: .8rem; }
+        .tbl { width: 100%; border-collapse: collapse; font-size: .84rem; }
+        .tbl th { background: #1a1a2e; color: #8b8fa8; text-align: left; padding: 10px 12px; }
+        .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+        .tbl tr:hover td { background: rgba(255,255,255,.03); }
+        .badge-a { background: rgba(50,200,100,.15); color: #42d47e; border-radius: 4px; padding: 2px 8px; font-size: .75rem; }
+        .badge-i { background: rgba(220,80,80,.15);  color: #e05050; border-radius: 4px; padding: 2px 8px; font-size: .75rem; }
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+        .form-row label { font-size: .8rem; color: #8b8fa8; display: block; margin-bottom: 4px; }
+        .form-row input[type=text], .form-row input[type=number],
+        .form-row select, .form-row textarea {
+            background: #1a1a2e; border: 1px solid var(--border); color: #ccd0e0;
+            padding: 8px 10px; border-radius: 6px; font-size: .84rem; width: 100%;
+        }
+        .form-row input[type=text]:focus, .form-row input[type=number]:focus,
+        .form-row select:focus { border-color: var(--accent); outline: none; }
+        .msg-ok  { color: #42d47e; font-size: .84rem; margin-top: 8px; }
+        .msg-err { color: #e05050; font-size: .84rem; margin-top: 8px; }
+
+        /* Mobile */
+        #sb-toggle {
+            display: none; position: fixed; top: 12px; left: 12px; z-index: 300;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 6px; padding: 6px 11px; cursor: pointer; color: #ccc; font-size: 1rem;
+        }
+        @media (max-width: 768px) {
+            #sb-toggle { display: block; }
+            #sidebar { transform: translateX(-100%); }
+            #sidebar.open { transform: translateX(0); }
+            #main-wrap { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <asp:ScriptManager ID="ScriptManager1" runat="server">
+            <Scripts>
+                <asp:ScriptReference Name="MsAjaxBundle" />
+                <asp:ScriptReference Name="jquery" />
+                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
+                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
+                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
+                <asp:ScriptReference Name="WebFormsBundle" />
+            </Scripts>
+        </asp:ScriptManager>
+
+        <button id="sb-toggle" type="button" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+
+        <!-- ═══ SIDEBAR ═══ -->
+        <aside id="sidebar">
+            <div class="brand">&#9670; Monolito4b</div>
+
+            <div class="profile">
+                <div class="p-name"><%= NombreUsuario %> — Administrador</div>
+                <div class="p-role">Panel de Administración</div>
+            </div>
+
+            <nav>
+                <div class="sec-lbl">Principal</div>
+                <a href="<%: ResolveUrl("~/Dashboard.aspx") %>">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                    Dashboard
+                </a>
+
+                <div class="sec-lbl">Administración</div>
+                <a href="<%: ResolveUrl("~/Mantenimiento/Usu.aspx") %>">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Usuarios
+                </a>
+                <a href="<%: ResolveUrl("~/Mantenimiento/Clientes.aspx") %>">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Clientes
+                </a>
+                <a href="<%: ResolveUrl("~/Mantenimiento/Proveedores.aspx") %>">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Proveedores
+                </a>
+
+                <!-- Productos submenu -->
+                <button type="button" class="sub-toggle" onclick="toggleSub(this,'sub-productos')">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    Productos
+                    <span class="arrow">&#9656;</span>
+                </button>
+                <div class="submenu" id="sub-productos">
+                    <a href="<%: ResolveUrl("~/Mantenimiento/Productos.aspx") %>">Gestión Individual</a>
+                    <a href="<%: ResolveUrl("~/Mantenimiento/Imagenes.aspx") %>">Imágenes de Productos</a>
+                    <a href="<%: ResolveUrl("~/Mantenimiento/ImportacionMasiva.aspx") %>">Importación Masiva</a>
+                </div>
+
+                <a href="<%: ResolveUrl("~/Mantenimiento/Pedidos.aspx") %>">
+                    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Pedidos
+                </a>
+            </nav>
+
+            <div class="sb-logout">
+                <asp:Button ID="btnLogout" runat="server" Text="&#x2B9E; Cerrar Sesión"
+                    OnClick="btnLogout_Click"
+                    OnClientClick="return confirmarSalir();" />
+            </div>
+        </aside>
+
+        <!-- ═══ CONTENT ═══ -->
+        <div id="main-wrap">
+            <div id="main-content">
+                <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+            </div>
+            <footer id="main-footer">Monolito4b &copy; <%: DateTime.Now.Year %></footer>
+        </div>
+    </form>
+
+    <script>
+        function toggleSub(btn, id) {
+            btn.classList.toggle('open');
+            document.getElementById(id).classList.toggle('open');
+        }
+        var __logoutOk = false;
+        function confirmarSalir() {
+            if (__logoutOk) return true;
+            Swal.fire({
+                title: '¿Cerrar sesión?', text: 'Tendrás que volver a iniciar sesión.',
+                icon: 'question', showCancelButton: true,
+                confirmButtonColor: '#c94040', cancelButtonColor: '#555',
+                confirmButtonText: 'Sí, salir', cancelButtonText: 'Cancelar'
+            }).then(function (r) {
+                if (r.isConfirmed) {
+                    __logoutOk = true;
+                    document.getElementById('<%= btnLogout.ClientID %>').click();
+                }
+            });
+            return false;
+        }
+        // Bloquear botón atrás post-logout
+        history.pushState(null, '', location.href);
+        window.addEventListener('popstate', function () { history.pushState(null, '', location.href); });
+        window.addEventListener('pageshow', function (e) { if (e.persisted) window.location.reload(); });
+    </script>
+</body>
+</html>

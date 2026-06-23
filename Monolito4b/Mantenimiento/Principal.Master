@@ -1,0 +1,118 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Principal.master.cs" Inherits="Monolito4b.Mantenimiento.Principal" %>
+<!DOCTYPE html>
+<html lang="es">
+<head runat="server">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',sans-serif;background:#0d0d1a;color:white;min-height:100vh;display:flex;flex-direction:column;}
+    .navbar{background:linear-gradient(135deg,#1a1a2e,#2d1f3d);padding:0 28px;
+      display:flex;align-items:center;gap:0;
+      border-bottom:1px solid rgba(255,255,255,.1);min-height:62px;}
+    .brand{color:#ff6b9d;font-size:20px;font-weight:400;margin-right:30px;text-decoration:none;}
+    .nav-menu{display:flex;gap:4px;flex:1;}
+    .nav-menu a{color:rgba(255,255,255,.55);font-size:13px;padding:8px 14px;border-radius:8px;
+      text-decoration:none;transition:all .2s;}
+    .nav-menu a:hover,.nav-menu a.active{background:rgba(255,107,157,.12);color:#ff6b9d;}
+    .nav-right{display:flex;align-items:center;gap:14px;margin-left:auto;}
+    .user-chip{display:flex;align-items:center;gap:10px;padding:4px 4px 4px 12px;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+      border-radius:30px;}
+    .user-chip .lbl-user{color:rgba(255,255,255,.85);font-size:13px;font-weight:500;}
+    .user-chip .lbl-rol {color:rgba(255,255,255,.45);font-size:11px;display:block;}
+    .user-chip .avatar{
+      width:38px;height:38px;border-radius:50%;
+      object-fit:cover;background:#0d0d1a;
+      border:2px solid #ff6b9d;
+    }
+    .btn-salir{padding:7px 16px;border:1px solid #ff6b9d;border-radius:20px;
+      background:transparent;color:#ff6b9d;font-size:12px;cursor:pointer;transition:all .2s;}
+    .btn-salir:hover{background:#ff6b9d;color:white;}
+    .content{flex:1;padding:0;}
+    .page-footer{padding:10px 28px;text-align:center;color:rgba(255,255,255,.2);font-size:11px;
+      border-top:1px solid rgba(255,255,255,.06);}
+  </style>
+  <asp:ContentPlaceHolder ID="head" runat="server" />
+</head>
+<body>
+  <form id="form1" runat="server">
+    <asp:ScriptManager ID="ScriptManager1" runat="server" />
+
+    <nav class="navbar">
+      <span class="brand">&#9670; Divi</span>
+
+      <%-- Menú Administrador --%>
+      <asp:Panel ID="pnl_adm" runat="server" Visible="false" CssClass="nav-menu">
+        <a href="~/Dashboard.aspx" runat="server">Dashboard</a>
+        <a href="~/Mantenimiento/Usu.aspx" runat="server">Usuarios</a>
+        <a href="~/Mantenimiento/Adm.aspx" runat="server">Panel Admin</a>
+        <a href="~/Mantenimiento/Productos.aspx" runat="server">Productos</a>
+        <a href="~/Mantenimiento/ImportacionMasiva.aspx" runat="server">Importación</a>
+      </asp:Panel>
+
+      <%-- Menú Usuario --%>
+      <asp:Panel ID="pnl_usu" runat="server" Visible="false" CssClass="nav-menu">
+        <a href="~/Usuario/Juego.aspx" runat="server">Juego</a>
+      </asp:Panel>
+
+      <div class="nav-right">
+        <div class="user-chip">
+          <div>
+            <span class="lbl-user"><asp:Literal ID="lbl_nse" runat="server" /></span>
+            <span class="lbl-rol"><asp:Literal ID="lbl_rol" runat="server" /></span>
+          </div>
+          <asp:Image ID="img_avatar" runat="server" CssClass="avatar" />
+        </div>
+        <asp:Button ID="btn_cerrar" runat="server" Text="Salir"
+          CssClass="btn-salir" OnClick="btn_cerrar_Click"
+          OnClientClick="confirmarSalir(event); return false;" />
+      </div>
+    </nav>
+
+    <div class="content">
+      <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server" />
+    </div>
+
+    <footer class="page-footer">Divi &copy; 2025</footer>
+  </form>
+
+  <script>
+    // ── Bloqueo del botón atrás/adelante del navegador ────────────
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', function () {
+      history.pushState(null, '', location.href);
+    });
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) { window.location.reload(); }
+    });
+
+    // ── Confirmación de cierre de sesión ─────────────────────────
+    var __logoutConfirmado = false;
+    function confirmarSalir(ev) {
+      if (__logoutConfirmado) return true;
+      if (ev && ev.preventDefault) ev.preventDefault();
+      Swal.fire({
+        title: '¿Cerrar sesión?',
+        text: 'Tendrás que iniciar sesión nuevamente.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#ff4081',
+        cancelButtonColor: '#666',
+        confirmButtonText: 'Sí, salir',
+        cancelButtonText: 'Cancelar'
+      }).then(function (r) {
+        if (r.isConfirmed) {
+          __logoutConfirmado = true;
+          __doPostBack('<%= btn_cerrar.UniqueID %>', '');
+        }
+      });
+      return false;
+    }
+  </script>
+</body>
+</html>
