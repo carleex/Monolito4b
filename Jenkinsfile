@@ -1,59 +1,59 @@
 pipeline {
-    agent any
+    agent { label 'windows' }
+
+    environment {
+        SOLUTION_FILE = 'Monolito4b.sln'
+        BUILD_CONFIG = 'Release'
+        MSBUILD = 'C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\MSBuild\\Current\\Bin\\MSBuild.exe'
+        NUGET = 'C:\\Tools\\nuget\\nuget.exe'
+        PUBLISH_DIR = 'C:\\inetpub\\wwwroot\\Monolito4b'
+    }
 
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
-                echo 'Codigo descargado desde GitHub'
+                bat 'echo Codigo descargado desde GitHub'
             }
         }
 
         stage('Restore NuGet') {
             steps {
-                echo 'Restaurando paquetes NuGet'
-                sh 'ls -la'
-                sh 'test -f Monolito4b/Packages.config || test -f Monolito4b/packages.config || echo "packages.config encontrado o no requerido"'
+                bat '"%NUGET%" restore "%SOLUTION_FILE%"'
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Compilando solucion Monolito4b'
-                sh 'test -f Monolito4b.sln'
-                echo 'Build simulado porque ASP.NET Web Forms .NET Framework requiere MSBuild de Windows'
+                bat '"%MSBUILD%" "%SOLUTION_FILE%" /p:Configuration=%BUILD_CONFIG%'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Ejecutando pruebas'
-                echo 'No hay pruebas automatizadas configuradas, se valida existencia de la solucion'
-                sh 'test -f Monolito4b.sln'
+                bat 'echo No hay pruebas unitarias configuradas'
+                bat 'if exist "%SOLUTION_FILE%" (echo Prueba OK: solucion encontrada) else (exit /b 1)'
             }
         }
 
         stage('Publish') {
             steps {
-                echo 'Publicando aplicacion'
-                sh 'mkdir -p publish'
-                sh 'echo "Aplicacion publicada de forma simulada" > publish/resultado.txt'
+                bat 'if not exist "%PUBLISH_DIR%" mkdir "%PUBLISH_DIR%"'
+                bat 'xcopy "%WORKSPACE%\\Monolito4b\\*" "%PUBLISH_DIR%\\" /E /I /Y'
             }
         }
 
         stage('Deploy IIS') {
             steps {
-                echo 'Despliegue simulado hacia IIS'
-                echo 'Para deploy real se necesita servidor Windows con IIS'
+                bat 'iisreset'
+                bat 'echo Aplicacion desplegada en IIS'
             }
         }
 
         stage('Database Check') {
             steps {
-                echo 'Validando conexiones SQL Server y MongoDB'
-                echo 'SQL Server configurado en el proyecto'
-                echo 'MongoDB configurado en Infrastructure/Mongo'
-                echo 'Validacion simulada porque las bases no estan dentro del contenedor Jenkins'
+                bat 'sqlcmd -S localhost -d Monolito4am -Q "SELECT GETDATE()"'
+                bat '"C:\\Program Files\\MongoDB\\mongosh\\bin\\mongosh.exe" --eval "show dbs"'
             }
         }
     }
