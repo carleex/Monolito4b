@@ -36,12 +36,18 @@ pipeline {
             }
         }
 
-        stage('Publish') {
-            steps {
-                bat 'if not exist "%PUBLISH_DIR%" mkdir "%PUBLISH_DIR%"'
-                bat 'xcopy "%WORKSPACE%\\Monolito4b\\*" "%PUBLISH_DIR%\\" /E /I /Y'
-            }
-        }
+stage('Publish') {
+    steps {
+        bat '''
+        "%MSBUILD%" "%SOLUTION_FILE%" ^
+        /p:Configuration=Release ^
+        /p:DeployOnBuild=true ^
+        /p:WebPublishMethod=FileSystem ^
+        /p:DeleteExistingFiles=True ^
+        /p:PublishUrl=C:\\inetpub\\wwwroot\\Monolito4b
+        '''
+    }
+}
 
         stage('Deploy IIS') {
             steps {
