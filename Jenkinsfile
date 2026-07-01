@@ -49,12 +49,11 @@ stage('Publish') {
     }
 }
 
-        stage('Deploy IIS') {
-            steps {
-                bat 'iisreset'
-                bat 'echo Aplicacion desplegada en IIS'
-            }
-        }
+stage('Deploy IIS') {
+    steps {
+        bat 'echo Aplicacion desplegada en IIS'
+    }
+}
 
         stage('Database Check') {
             steps {
